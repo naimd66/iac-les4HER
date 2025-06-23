@@ -1,0 +1,9 @@
+- name: Install webserver & database
+  hosts: all
+  become: yes
+
+  roles:
+    - role: webserver
+      when: "'webservers' in group_names"
+    - role: dataserver
+      when: "'databases' in group_names"

@@ -2,3 +2,9 @@ mysql_root_password: rootpassword
 mysql_db_user: dbuser
 mysql_db_password: dbpassword
 mysql_db_name: appdb
+
+handlers:
+  - name: restart mysql
+    ansible.builtin.service:
+      name: mysql
+      state: restarted
