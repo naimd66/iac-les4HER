@@ -1,0 +1,50 @@
+---
+- name: Set MySQL root password before install
+  debconf:
+    name: "mysql-server"
+    question: "mysql-server/root_password"
+    value: "{{ mysql_root_password }}"
+    vtype: "password"
+
+- name: Confirm MySQL root password again
+  debconf:
+    name: "mysql-server"
+    question: "mysql-server/root_password_again"
+    value: "{{ mysql_root_password }}"
+    vtype: "password"
+
+- name: Install MySQL server
+  apt:
+    name: mysql-server
+    state: present
+    update_cache: yes
+
+- name: Allow MySQL remote connections
+  lineinfile:
+    path: /etc/mysql/mysql.conf.d/mysqld.cnf
+    regexp: '^bind-address'
+    line: 'bind-address = 0.0.0.0'
+  notify: restart mysql
+
+- name: Ensure MySQL is started
+  service:
+    name: mysql
+    state: started
+    enabled: yes
+
+- name: Create database
+  mysql_db:
+    name: "{{ mysql_db_name }}"
+    state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: Create database user
+  mysql_user:
+    name: "{{ mysql_db_user }}"
+    password: "{{ mysql_db_password }}"
+    priv: "{{ mysql_db_name }}.*:ALL"
+    host: "%"
+    state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"

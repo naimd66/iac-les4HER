@@ -1,0 +1,11 @@
+#cloud-config
+users:
+  - name: iac
+    groups: sudo
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+
+package_update: true
+packages:
+  - wget
+  - ntpdate

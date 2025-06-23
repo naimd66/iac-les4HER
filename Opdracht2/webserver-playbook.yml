@@ -1,0 +1,7 @@
+# webserver-playbook.yml
+- name: Installeer webserver via Galaxy role
+  hosts: all
+  become: yes
+
+  roles:
+    - role: SirMaxwell24.Maxvd.IAC_Webserver
