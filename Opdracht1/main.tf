@@ -1,7 +1,10 @@
 terraform {
   required_providers {
     esxi = {
-      source  = "josenk/esxi"
+      source = "josenk/esxi"
+    }
+    local = {
+      source = "hashicorp/local"
     }
   }
 }
@@ -17,7 +20,6 @@ provider "esxi" {
 locals {
   webservers = ["webserver-1"]
   databases  = ["databaseserver"]
-
   all_vms    = concat(local.webservers, local.databases)
 }
 
@@ -42,32 +44,23 @@ resource "esxi_guest" "vms" {
     "userdata.encoding" = "base64"
   }
 }
-  resource "local_file" "ansible_inventory" {
+
+resource "local_file" "ansible_inventory" {
   depends_on = [esxi_guest.vms]
+
+  filename = "${path.module}/inventory.ini"
 
   content = <<EOT
 [webservers]
 ${join("\n", [
   for name, vm in esxi_guest.vms :
-  vm.guest_name == "webserver1" ? "ansible_host=${vm.ip_address} ansible_user=iac ansible_ssh_private_key_file=~/.ssh/skylab" : ""
+  vm.guest_name == "webserver-1" ? "${vm.guest_name} ansible_host=${vm.ip_address} ansible_user=iac ansible_ssh_private_key_file=~/.ssh/skylab" : ""
 ])}
 
 [databases]
 ${join("\n", [
   for name, vm in esxi_guest.vms :
-  vm.guest_name == "databaseserver" ? "ansible_host=${vm.ip_address} ansible_user=iac ansible_ssh_private_key_file=~/.ssh/skylab" : ""
+  vm.guest_name == "databaseserver" ? "${vm.guest_name} ansible_host=${vm.ip_address} ansible_user=iac ansible_ssh_private_key_file=~/.ssh/skylab" : ""
 ])}
 EOT
-
-  filename = "${path.module}/inventory.ini"
-}
-resource "local_file" "inventory" {
-  filename = "${path.module}/inventory.ini"
-  content  = <<EOF
-[webservers]
-${azurerm_linux_virtual_machine.web01.name} ansible_host=${azurerm_linux_virtual_machine.web01.public_ip_address}
-
-[databases]
-${azurerm_linux_virtual_machine.db01.name} ansible_host=${azurerm_linux_virtual_machine.db01.public_ip_address}
-EOF
-}
+} 
